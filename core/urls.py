@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include([
         path('', include('auth_app.api.urls')),
+        path('', include('offers_app.api.urls')),
         path('', include('kanban_app.api.urls')),
     ])),
 ]

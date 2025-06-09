@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from auth_app.models import UserProfile 
+from auth_app.models import UserProfile
 from django.contrib.auth.models import User
 
 
@@ -10,10 +10,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     repeated_password = serializers.CharField(write_only=True, min_length=8)
     email = serializers.EmailField()
+    type = serializers.CharField()
 
     class Meta:
         model = User
-        fields = ["username", "email", "password", "repeated_password"]
+        fields = ["username", "email", "password", "repeated_password", "type"]
 
     def validate(self, data):
         if data["password"] != data["repeated_password"]:
@@ -27,6 +28,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
             email=validated_data["email"],
             password=validated_data["password"],
         )
+
+        UserProfile.objects.create(
+            user=user, type=validated_data.get("type", ""))
+
         Token.objects.get_or_create(user=user)
         return user
 
@@ -44,7 +49,8 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid username or password.")
         data["user"] = user  # pack User ins validierte Objekt
         return data
-    
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
@@ -69,6 +75,83 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         for field in ["first_name", "last_name", "location", "tel", "description", "working_hours"]:
+            if data[field] is None:
+                data[field] = ""
+        return data
+
+
+class UserProfilePatchSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+            "email",
+            "created_at",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in ["first_name", "last_name", "file", "location", "tel", "description", "working_hours"]:
+            if data[field] is None:
+                data[field] = ""
+        return data
+
+
+class BusinessListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in ["first_name", "last_name", "file", "location", "tel", "description", "working_hours"]:
+            if data[field] is None:
+                data[field] = ""
+        return data
+
+
+class CustomerListSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "type",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in ["first_name", "last_name", "file"]:
             if data[field] is None:
                 data[field] = ""
         return data
