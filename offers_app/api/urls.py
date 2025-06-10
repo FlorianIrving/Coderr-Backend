@@ -1,10 +1,12 @@
 from django.urls import path
-from .views import OfferViewSet, OfferDetailView
+from .views import OfferViewSet, OfferDetailView, OfferDetailOneView
 from rest_framework.routers import DefaultRouter
 
 
 custom_urls = [
     path("offers/<int:pk>/", OfferDetailView.as_view(), name="offer-detail-view"),
+    path("offerdetails/<int:pk>/", OfferDetailOneView.as_view(), name="offer-one-view"),
+
 ]
 
 

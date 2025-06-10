@@ -3,6 +3,8 @@ from offers_app.models import OfferDetail, Offer
 from django.db.models import Min
 
 # Offer Get
+
+
 class OfferDetailListSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
 
@@ -40,6 +42,8 @@ class OfferGetSerializer(serializers.ModelSerializer):
         }
 
 # Offer Post
+
+
 class OfferDetailPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfferDetail
@@ -86,6 +90,7 @@ class OfferDetailSimpleSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return request.build_absolute_uri(f"/api/offerdetails/{obj.id}/")
 
+
 class OfferGetDetailSerializer(serializers.ModelSerializer):
     details = OfferDetailSimpleSerializer(many=True, read_only=True)
 
@@ -96,6 +101,7 @@ class OfferGetDetailSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at',
             'details', 'min_price', 'min_delivery_time'
         ]
+
 
 class OfferGetDetailSerializer(serializers.ModelSerializer):
     details = OfferDetailSimpleSerializer(many=True, read_only=True)
@@ -116,6 +122,50 @@ class OfferGetDetailSerializer(serializers.ModelSerializer):
     def get_min_delivery_time(self, obj):
         return obj.details.aggregate(Min('delivery_time_in_days'))['delivery_time_in_days__min']
 
+
+# Offer Patch
+class OfferDetailNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OfferDetail
+        fields = [
+            "id",
+            "title",
+            "revisions",
+            "delivery_time_in_days",
+            "price",
+            "features",
+            "offer_type"
+        ]
+
+
+class OfferPatchDetailSerializer(serializers.ModelSerializer):
+    details = OfferDetailNestedSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = [
+            "id",
+            "title",
+            "image",
+            "description",
+            "details"
+        ]
+
+
+# Offer One View Get
+class OfferDetailOneSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OfferDetail
+        fields = [
+            "id",
+            "title",
+            "revisions",
+            "delivery_time_in_days",
+            "price",
+            "features",
+            "offer_type"
+        ]
 
 # # NEW
 # class UserDetailsSerializer(serializers.ModelSerializer):
