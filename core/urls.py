@@ -24,5 +24,6 @@ urlpatterns = [
         path('', include('offers_app.api.urls')),
         path('', include('kanban_app.api.urls')),
         path('', include('orders_app.api.urls')),
+        path('', include('reviews_app.api.urls')),
     ])),
 ]

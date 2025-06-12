@@ -18,13 +18,13 @@ class OfferFilter(FilterSet):
     creator_id = NumberFilter(field_name='user_id', lookup_expr='exact')
 
 
-class OfferViewSet(ModelViewSet):
-    queryset = Offer.objects.all().prefetch_related('details')
-    serializer_class = OfferGetSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_class = OfferFilter
-    search_fields = ['title', 'description']
-    ordering_fields = ['updated_at', 'min_price']
+# class OfferViewSet(ModelViewSet):
+#     queryset = Offer.objects.all().prefetch_related('details')
+#     serializer_class = OfferGetSerializer
+#     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+#     filterset_class = OfferFilter
+#     search_fields = ['title', 'description']
+#     ordering_fields = ['updated_at', 'min_price']
 
 
 class OfferView(APIView):

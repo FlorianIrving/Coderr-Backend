@@ -1,8 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from rest_framework.status import HTTP_204_NO_CONTENT
 from orders_app.models import OrderMainModel
 from .serializers import OrderGetResponseSerializer, OrderPostSerializer, OrderPostResponseSerializer
 
@@ -32,7 +34,10 @@ class OrderCombinedView(APIView):
 
 
 class OrderPatchDeleteView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
 
     def patch(self, request, pk):
         try:
@@ -55,12 +60,34 @@ class OrderPatchDeleteView(APIView):
         return Response(response_serializer.data, status=200)
 
     def delete(self, request, pk):
+        order = get_object_or_404(OrderMainModel, id=pk)
+        order.delete()
+        return Response(status=HTTP_204_NO_CONTENT)
+
+class OrderCountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        user = request.user
         try:
             order = OrderMainModel.objects.get(pk=pk)
         except OrderMainModel.DoesNotExist:
             return Response({"detail": "Order not found."}, status=404)
-        if request.user.id != order.customer_user.id:
-            return Response({"detail": "You are not authorized to delete this order."}, status=403)
+        queryset = OrderMainModel.objects.filter(
+            Q(customer_user=user) | Q(business_user=user),
+            status=order.status
+        ).distinct()
+        count = queryset.count()
+        return Response({"order_count": count}, status=200)
+    
+class OrderCompletedCountView(APIView):
+    permission_classes = [IsAuthenticated]
 
-        order.delete()
-        return Response(status=204)
+    def get(self, request, pk):
+        user = request.user
+        queryset = OrderMainModel.objects.filter(
+            Q(customer_user=user) | Q(business_user=user),
+            status="completed"
+        ).distinct()
+        count = queryset.count()
+        return Response({"order_count": count}, status=200)

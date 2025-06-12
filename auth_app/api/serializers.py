@@ -74,7 +74,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        for field in ["first_name", "last_name", "location", "tel", "description", "working_hours"]:
+        for field in ["first_name", "last_name", "location", "tel", "description", "working_hours", "file"]:
             if data[field] is None:
                 data[field] = ""
         return data

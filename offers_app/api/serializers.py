@@ -42,8 +42,6 @@ class OfferGetSerializer(serializers.ModelSerializer):
         }
 
 # Offer Post
-
-
 class OfferDetailPostSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfferDetail
