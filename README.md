@@ -84,19 +84,6 @@ Returns live public metrics of the platform:
 
 ---
 
-## 🧪 Test Users
-
-The project includes test users for demo purposes. Use `/api/token/` to log in:
-
-- `florian123@example.com`
-- `marie@example.com`
-- `max@example.com`
-- `lisa@example.com`
-
-All users can create boards, offers, tasks, comments, and reviews depending on their role.
-
----
-
 ## ⚙️ Project-Specific Notes
 
 - Reviews are managed using **separate models** for POST/GET and PATCH/DELETE.
