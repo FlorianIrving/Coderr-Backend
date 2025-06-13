@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from orders_app.models import OrderMainModel, OfferDetail
 
+
 class OrderPostSerializer(serializers.Serializer):
     offer_detail_id = serializers.IntegerField()
 
@@ -17,10 +18,8 @@ class OrderPostSerializer(serializers.Serializer):
         request = self.context["request"]
         offer_detail = validated_data["offer_detail_id"]
         offer = offer_detail.offer
-
         if request.user.profile.type != "customer":
             raise PermissionDenied("Only customers can place orders.")
-
         return OrderMainModel.objects.create(
             customer_user=request.user,
             business_user=offer.user,
