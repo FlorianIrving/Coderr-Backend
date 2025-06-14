@@ -1,11 +1,12 @@
 from .serializers import OfferPostSerializer, OfferGetSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from offers_app.models import Offer, OfferDetail
 from django_filters.rest_framework import FilterSet, NumberFilter
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.pagination import PageNumberPagination
 from offers_app.api.serializers import OfferGetDetailSerializer, OfferDetailOneSerializer, OfferPatchDetailSerializer
 
@@ -25,14 +26,8 @@ class OfferView(APIView):
     API view for listing and creating offers.
     Supports filtering, searching, ordering, and pagination on GET.
     """
-
-    def get_permissions(self):
-        """
-        Allows unauthenticated access for GET requests, authentication required for POST.
-        """
-        if self.request.method == "GET":
-            return [AllowAny()]
-        return [IsAuthenticated()]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
@@ -98,6 +93,7 @@ class OfferDetailView(APIView):
     """
     API view for retrieving, updating or deleting a specific offer.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -148,6 +144,7 @@ class OfferDetailOneView(APIView):
     """
     API view for retrieving a single OfferDetail entry by ID.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):

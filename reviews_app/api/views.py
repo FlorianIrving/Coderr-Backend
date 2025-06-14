@@ -2,8 +2,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from reviews_app.models import ReviewGetModel, ReviewPatchDeleteModel, ReviewPostModel
-from .serializers import ReviewGetSerializer, ReviewPostSerializer, ReviewPostResponseSerializer, ReviewPatchSerializer
+from rest_framework.authentication import TokenAuthentication
+from reviews_app.models import ReviewPatchDeleteModel, ReviewPostModel
+from .serializers import ReviewPostSerializer, ReviewPostResponseSerializer, ReviewPatchSerializer
 from django.db.models import Avg
 from django.contrib.auth.models import User
 from offers_app.models import Offer
@@ -13,15 +14,34 @@ class ReviewGetPostView(APIView):
     """
     API view for retrieving the reviews for the logged-in user and posting new reviews.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         """
-        Returns a list of reviews where the logged-in user is the recipient.
+        Returns a list of all reviews. Can be filtered by business_user_id, reviewer_id and ordered by updated_at or rating.
+        Only accessible to authenticated users.
         """
-        user = request.user
-        queryset = ReviewGetModel.objects.filter(user=user)
-        serializer = ReviewGetSerializer(queryset, many=True)
+        # Grund-Queryset: alle Reviews aus der Datenbank
+        queryset = ReviewPostModel.objects.all()
+
+        # Optionaler Filter: Nur Bewertungen für einen bestimmten Business-Nutzer
+        business_user_id = request.query_params.get("business_user_id")
+        if business_user_id:
+            queryset = queryset.filter(business_user__id=business_user_id)
+
+        # Optionaler Filter: Nur Bewertungen von einem bestimmten Rezensenten
+        reviewer_id = request.query_params.get("reviewer_id")
+        if reviewer_id:
+            queryset = queryset.filter(reviewer__id=reviewer_id)
+
+        # Optionales Sortieren nach einem Feld ('updated_at' oder 'rating')
+        ordering = request.query_params.get("ordering")
+        if ordering in ["updated_at", "rating"]:
+            queryset = queryset.order_by(ordering)
+
+        # Serialisieren und Rückgabe der (ggf. gefilterten) Liste
+        serializer = ReviewPostResponseSerializer(queryset, many=True)
         return Response(serializer.data, status=200)
 
     def post(self, request):
@@ -42,6 +62,7 @@ class ReviewPatchDeleteView(APIView):
     """
     API view for updating or deleting a review written by the logged-in user.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, pk):

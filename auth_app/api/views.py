@@ -10,6 +10,7 @@ from .serializers import (
     CustomerListSerializer
 )
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from auth_app.models import UserProfile
 
@@ -64,6 +65,7 @@ class UserProfileView(APIView):
     GET: Retrieve profile by user ID.
     PATCH: Update profile (only allowed for the owner).
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -89,7 +91,7 @@ class UserProfileView(APIView):
             return Response({"detail": "Not found."}, status=404)
 
         if request.user.id != profile.user.id:
-            return Response({"detail": "Not authorized."}, status=403)
+            return Response({"detail": "Not authorized."}, status=401)
 
         serializer = UserProfilePatchSerializer(
             profile, data=request.data, partial=True)
@@ -103,6 +105,7 @@ class BusinessListView(APIView):
     """
     API endpoint for listing all users with profile type 'business'.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -115,6 +118,7 @@ class CustomerListView(APIView):
     """
     API endpoint for listing all users with profile type 'customer'.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

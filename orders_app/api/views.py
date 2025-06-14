@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.authentication import TokenAuthentication
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.status import HTTP_204_NO_CONTENT
@@ -15,6 +16,7 @@ class OrderCombinedView(APIView):
     - GET: Returns all orders where the user is either the customer or the business.
     - POST: Allows a customer to create a new order.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -72,7 +74,7 @@ class OrderPatchDeleteView(APIView):
             return Response({"detail": "Order not found."}, status=404)
 
         if request.user.id != order.business_user.id:
-            return Response({"detail": "You are not authorized to update this order."}, status=403)
+            return Response({"detail": "You are not authorized to update this order."}, status=401)
 
         allowed_fields = ["status"]
         if any(field not in allowed_fields for field in request.data):
@@ -101,6 +103,7 @@ class OrderCountView(APIView):
     Returns the count of orders with the same status as the referenced order.
     Used to track how many orders of a given type a user has.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
@@ -122,6 +125,7 @@ class OrderCompletedCountView(APIView):
     """
     Returns the count of all completed orders for the current user.
     """
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
