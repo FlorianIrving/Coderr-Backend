@@ -4,9 +4,15 @@ from orders_app.models import OrderMainModel, OfferDetail
 
 
 class OrderPostSerializer(serializers.Serializer):
+    """
+    Serializer used for creating new orders by passing an offer_detail ID.
+    """
     offer_detail_id = serializers.IntegerField()
 
     def validate_offer_detail_id(self, value):
+        """
+        Validates that the given OfferDetail exists.
+        """
         try:
             offer_detail = OfferDetail.objects.select_related(
                 "offer").get(pk=value)
@@ -15,11 +21,17 @@ class OrderPostSerializer(serializers.Serializer):
         return offer_detail
 
     def create(self, validated_data):
+        """
+        Creates a new order entry after validating user type and offer details.
+        Only users with profile type 'customer' can place orders.
+        """
         request = self.context["request"]
         offer_detail = validated_data["offer_detail_id"]
         offer = offer_detail.offer
+
         if request.user.profile.type != "customer":
             raise PermissionDenied("Only customers can place orders.")
+
         return OrderMainModel.objects.create(
             customer_user=request.user,
             business_user=offer.user,
@@ -29,6 +41,10 @@ class OrderPostSerializer(serializers.Serializer):
 
 
 class OrderGetResponseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for returning order information enriched with data from the related OfferDetail.
+    Used for GET responses.
+    """
     title = serializers.CharField(source="offer_detail.title", read_only=True)
     revisions = serializers.IntegerField(
         source="offer_detail.revisions", read_only=True)
@@ -60,6 +76,10 @@ class OrderGetResponseSerializer(serializers.ModelSerializer):
 
 
 class OrderPostResponseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for returning order data after a successful creation.
+    Includes related OfferDetail data for client display.
+    """
     title = serializers.CharField(source="offer_detail.title", read_only=True)
     revisions = serializers.IntegerField(
         source="offer_detail.revisions", read_only=True)

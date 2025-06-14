@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'offers_app',
     'orders_app',
     'reviews_app',
-    'kanban_app',
 
 ]
 

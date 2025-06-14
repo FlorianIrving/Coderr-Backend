@@ -82,7 +82,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserProfilePatchSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
-    email = serializers.EmailField(source="user.email", read_only=True)
+    email = serializers.EmailField(source="user.email", required=False)
 
     class Meta:
         model = UserProfile
@@ -107,6 +107,19 @@ class UserProfilePatchSerializer(serializers.ModelSerializer):
             if data[field] is None:
                 data[field] = ""
         return data
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+
+        if "email" in user_data:
+            instance.user.email = user_data["email"]
+            instance.user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
 
 
 class BusinessListSerializer(serializers.ModelSerializer):
