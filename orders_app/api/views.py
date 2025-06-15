@@ -103,7 +103,7 @@ class OrderCountView(APIView):
     """
     Returns the count of 'in_progress' orders for a given business user.
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
         try:
@@ -126,7 +126,7 @@ class OrderCompletedCountView(APIView):
     """
     Returns the count of completed orders for a specific business user.
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
         try:
