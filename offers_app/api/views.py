@@ -21,12 +21,17 @@ class OfferFilter(FilterSet):
     creator_id = NumberFilter(field_name='user_id', lookup_expr='exact')
 
 
+class CustomPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = 10
+
+
 class OfferView(APIView):
     """
     API view for listing and creating offers.
     Supports filtering, searching, ordering, and pagination on GET.
     """
-    permission_classes = [AllowAny]  # Allow any user to access this view
+    permission_classes = [AllowAny]
 
     def get(self, request):
         """
@@ -52,9 +57,16 @@ class OfferView(APIView):
 
         # Filter by maximum delivery time
         max_delivery_time = request.query_params.get("max_delivery_time")
-        if max_delivery_time:
-            offers = offers.filter(
-                details__delivery_time_in_days__lte=max_delivery_time)
+        if max_delivery_time is not None:
+            try:
+                max_days = int(max_delivery_time)
+                offers = offers.filter(
+                    details__delivery_time_in_days__lte=max_days)
+            except ValueError:
+                return Response(
+                    {"detail": "max_delivery_time must be an integer."},
+                    status=400
+                )
 
         # Search in title or description
         search = request.query_params.get("search")
@@ -68,7 +80,7 @@ class OfferView(APIView):
         offers = offers.order_by(ordering)
 
         # Paginate and serialize the queryset
-        paginator = PageNumberPagination()
+        paginator = CustomPageNumberPagination()
         paginated_offers = paginator.paginate_queryset(
             offers.distinct(), request)
         serializer = OfferGetSerializer(
@@ -120,6 +132,13 @@ class OfferDetailView(APIView):
         Partially updates a specific offer and its nested details.
         """
         offer = get_object_or_404(Offer, pk=pk)
+
+        if offer.user != request.user:
+            return Response(
+                {"detail": "Not authorized."},
+                status=403
+            )
+
         serializer = OfferPatchDetailSerializer(
             offer,
             data=request.data,

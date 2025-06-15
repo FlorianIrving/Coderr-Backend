@@ -112,7 +112,7 @@ class OrderCountView(APIView):
             return Response({"detail": "Business user not found."}, status=404)
 
         if not hasattr(user, 'profile') or user.profile.type != "business":
-            return Response({"detail": "User is not a business profile."}, status=400)
+            return Response({"detail": "User exists but is not a business profile."}, status=400)
 
         count = OrderMainModel.objects.filter(
             business_user=user,
