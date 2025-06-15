@@ -47,13 +47,26 @@ class ReviewGetPostView(APIView):
     def post(self, request):
         """
         Creates a new review written by the logged-in user.
+        Only users with 'customer' profile type are allowed to post reviews.
         """
+        user = request.user
+
+        # Check if user is authenticated
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=401)
+
+        # Check if user has a customer profile
+        if not hasattr(user, "profile") or user.profile.type != "customer":
+            return Response({"detail": "Only customers can write reviews."}, status=403)
+
         serializer = ReviewPostSerializer(
             data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        # Set the reviewer to the authenticated user
-        review = serializer.save(reviewer=request.user)
-        # Serialize the response using the response serializer
+    
+        # Save the review with the authenticated user as reviewer
+        review = serializer.save(reviewer=user)
+
+        # Serialize and return the newly created review
         response_serializer = ReviewPostResponseSerializer(review)
         return Response(response_serializer.data, status=201)
 

@@ -1,7 +1,7 @@
 from .serializers import OfferPostSerializer, OfferGetSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from offers_app.models import Offer, OfferDetail
 from django_filters.rest_framework import FilterSet, NumberFilter
 from django.shortcuts import get_object_or_404
@@ -26,8 +26,7 @@ class OfferView(APIView):
     API view for listing and creating offers.
     Supports filtering, searching, ordering, and pagination on GET.
     """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]  # Allow any user to access this view
 
     def get(self, request):
         """
@@ -80,7 +79,18 @@ class OfferView(APIView):
     def post(self, request):
         """
         Creates a new offer with nested offer details.
+        Only users with 'business' profile type are allowed to post.
         """
+        user = request.user
+
+        # Check if user is authenticated
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=401)
+
+        # Check if user has a business profile
+        if not hasattr(user, "profile") or user.profile.type != "business":
+            return Response({"detail": "Only business users can create offers."}, status=403)
+
         serializer = OfferPostSerializer(
             data=request.data, context={"request": request})
         if serializer.is_valid():

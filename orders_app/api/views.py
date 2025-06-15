@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.authentication import TokenAuthentication
 from django.db.models import Q
@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.status import HTTP_204_NO_CONTENT
 from orders_app.models import OrderMainModel
 from .serializers import OrderGetResponseSerializer, OrderPostSerializer, OrderPostResponseSerializer
+from django.contrib.auth.models import User
 
 
 class OrderCombinedView(APIView):
@@ -100,39 +101,45 @@ class OrderPatchDeleteView(APIView):
 
 class OrderCountView(APIView):
     """
-    Returns the count of orders with the same status as the referenced order.
-    Used to track how many orders of a given type a user has.
+    Returns the count of 'in_progress' orders for a given business user.
     """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        user = request.user
         try:
-            order = OrderMainModel.objects.get(pk=pk)
-        except OrderMainModel.DoesNotExist:
-            return Response({"detail": "Order not found."}, status=404)
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "Business user not found."}, status=404)
 
-        queryset = OrderMainModel.objects.filter(
-            Q(customer_user=user) | Q(business_user=user),
-            status=order.status
-        ).distinct()
-        count = queryset.count()
+        if not hasattr(user, 'profile') or user.profile.type != "business":
+            return Response({"detail": "User is not a business profile."}, status=400)
+
+        count = OrderMainModel.objects.filter(
+            business_user=user,
+            status="in_progress"
+        ).count()
+
         return Response({"order_count": count}, status=200)
 
 
 class OrderCompletedCountView(APIView):
     """
-    Returns the count of all completed orders for the current user.
+    Returns the count of completed orders for a specific business user.
     """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk):
-        user = request.user
-        queryset = OrderMainModel.objects.filter(
-            Q(customer_user=user) | Q(business_user=user),
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return Response({"detail": "Business user not found."}, status=404)
+
+        if not hasattr(user, 'profile') or user.profile.type != "business":
+            return Response({"detail": "User is not a business profile."}, status=400)
+
+        count = OrderMainModel.objects.filter(
+            business_user=user,
             status="completed"
-        ).distinct()
-        count = queryset.count()
-        return Response({"order_count": count}, status=200)
+        ).count()
+
+        return Response({"completed_order_count": count}, status=200)

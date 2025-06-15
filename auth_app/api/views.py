@@ -91,7 +91,7 @@ class UserProfileView(APIView):
             return Response({"detail": "Not found."}, status=404)
 
         if request.user.id != profile.user.id:
-            return Response({"detail": "Not authorized."}, status=401)
+            return Response({"detail": "Not authorized."}, status=403)
 
         serializer = UserProfilePatchSerializer(
             profile, data=request.data, partial=True)
