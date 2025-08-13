@@ -187,4 +187,4 @@ These accounts will allow testing both roles (customer + business) with token-ba
 
 Created by **Florian Irving**  
 GitHub: [@BadPain](https://github.com/BadPain)  
-Projektstatus: **Aktiv in Entwicklung** 🚧
+Projektstatus: Wie immer, nie fertig. :D
